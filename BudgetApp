@@ -1,0 +1,82 @@
+def get_annual_salary():
+    try:
+        annual_salary = float(input("Enter your total annual salary: "))
+        if annual_salary <= 0:
+            raise ValueError
+    except ValueError:
+        print("Please enter a valid positive number for the annual salary.")
+        return get_annual_salary()
+    return annual_salary
+
+def get_expenses():
+    categories = {}
+    num_categories = int(input("How many expense categories do you have? "))
+    for _ in range(num_categories):
+        category_name = input("Enter the expense category name: ").capitalize()
+
+        try:
+            amount = float(input(f"Enter the monthly amount for {category_name}: "))
+            if amount < 0:
+                raise ValueError
+        except ValueError:
+            print("Please enter a valid positive number for the amount.")
+            continue
+
+        categories[category_name] = categories.get(category_name, 0) + amount
+    return categories
+
+def calculate_impact(annual_salary, expenses):
+    tax_rate = 0.1382
+    after_tax_annual_salary = annual_salary * (1 - tax_rate)
+    biweekly_income = after_tax_annual_salary / 26
+    # Monthly income assuming 24 paychecks (2 per month except May and October)
+    standard_monthly_income = biweekly_income * 2
+    # Monthly income for May and October, having 3 paychecks
+    extra_pay_month_income = biweekly_income * 3
+    total_expenses = sum(expenses.values())
+    
+    report = {
+        "Standard Monthly Income": standard_monthly_income,
+        "Extra Pay Month Income": extra_pay_month_income,
+        "Total Expenses": total_expenses,
+        "Net Standard Month Income": standard_monthly_income - total_expenses,
+        "Net Extra Pay Month Income": extra_pay_month_income - total_expenses,
+        "After-Tax Annual Salary": after_tax_annual_salary,
+        "Monthly Savings (Standard Month)": standard_monthly_income - total_expenses,
+        "Monthly Savings (Extra Pay Month)": extra_pay_month_income - total_expenses,
+        "Annual Savings": after_tax_annual_salary - (total_expenses * 12)
+    }
+    
+    monthly_impacts = {category: (amount / standard_monthly_income) * 100 for category, amount in expenses.items()}
+    yearly_impacts = {category: (amount * 12 / after_tax_annual_salary) * 100 for category, amount in expenses.items()}
+    
+    return report, monthly_impacts, yearly_impacts
+
+def print_report(report, monthly_impacts, yearly_impacts):
+    print("\n--- Budget Report ---")
+    print(f"Standard Monthly Income (2 Paychecks): ${report['Standard Monthly Income']:.2f}")
+    print(f"Extra Pay Month Income (3 Paychecks in May/Oct): ${report['Extra Pay Month Income']:.2f}")
+    print(f"Total Monthly Expenses: ${report['Total Expenses']:.2f}")
+    print(f"Net Standard Month Income: ${report['Net Standard Month Income']:.2f}")
+    print(f"Net Extra Pay Month Income: ${report['Net Extra Pay Month Income']:.2f}")
+    print(f"After-Tax Annual Salary: ${report['After-Tax Annual Salary']:.2f}")
+    print(f"Monthly Savings (Standard Month): ${report['Monthly Savings (Standard Month)']:.2f}")
+    print(f"Monthly Savings (Extra Pay Month): ${report['Monthly Savings (Extra Pay Month)']:.2f}")
+    print(f"Annual Savings: ${report['Annual Savings']:.2f}\n")
+
+    print("Monthly Impact of each category on Standard Monthly Income:")
+    for category, impact in monthly_impacts.items():
+        print(f"{category}: {impact:.2f}%")
+
+    print("\nAnnual Impact of each category on After-Tax Annual Salary:")
+    for category, impact in yearly_impacts.items():
+        print(f"{category}: {impact:.2f}%")
+
+def main():
+    annual_salary = get_annual_salary()
+    expenses = get_expenses()
+    report, monthly_impacts, yearly_impacts = calculate_impact(annual_salary, expenses)
+    print_report(report, monthly_impacts, yearly_impacts)
+
+if __name__ == "__main__":
+    main()
