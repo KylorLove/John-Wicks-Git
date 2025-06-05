@@ -1,3 +1,4 @@
+
 def get_annual_salary():
     try:
         annual_salary = float(input("Enter your total annual salary: "))
@@ -25,16 +26,49 @@ def get_expenses():
         categories[category_name] = categories.get(category_name, 0) + amount
     return categories
 
-def calculate_impact(annual_salary, expenses):
+def get_401k_details(annual_salary):
+    try:
+        current_balance = float(input("Enter your current 401(k) balance: "))
+        if current_balance < 0:
+            raise ValueError
+    except ValueError:
+        print("Please enter a valid positive number for 401(k) balance.")
+        return get_401k_details(annual_salary)
+    
+    try:
+        deferral_percent = float(input("Enter your 401(k) deferral percentage of your annual salary: "))
+        if deferral_percent < 0 or deferral_percent > 100:
+            raise ValueError
+    except ValueError:
+        print("Enter a valid percentage between 0 and 100 for the deferral amount.")
+        return get_401k_details(annual_salary)
+
+    deferral_amount = (deferral_percent / 100) * annual_salary
+
+    try:
+        match_percent = float(input("Enter your employer's match percentage (up to 200%): "))
+        if match_percent < 0 or match_percent > 200:
+            raise ValueError
+    except ValueError:
+        print("Enter a valid percentage between 0 and 200 for the employer match.")
+        return get_401k_details(annual_salary)
+    
+    return current_balance, deferral_amount, match_percent
+
+def calculate_impact(annual_salary, expenses, current_balance, deferral_amount, match_percent):
     tax_rate = 0.1382
     after_tax_annual_salary = annual_salary * (1 - tax_rate)
     biweekly_income = after_tax_annual_salary / 26
-    # Monthly income assuming 24 paychecks (2 per month except May and October)
     standard_monthly_income = biweekly_income * 2
-    # Monthly income for May and October, having 3 paychecks
     extra_pay_month_income = biweekly_income * 3
     total_expenses = sum(expenses.values())
-    
+
+    # Update calculation for employer match
+    employer_match = deferral_amount * (match_percent / 100)
+
+    total_annual_deferral = deferral_amount + employer_match
+    monthly_deferral = total_annual_deferral / 12
+
     report = {
         "Standard Monthly Income": standard_monthly_income,
         "Extra Pay Month Income": extra_pay_month_income,
@@ -44,7 +78,11 @@ def calculate_impact(annual_salary, expenses):
         "After-Tax Annual Salary": after_tax_annual_salary,
         "Monthly Savings (Standard Month)": standard_monthly_income - total_expenses,
         "Monthly Savings (Extra Pay Month)": extra_pay_month_income - total_expenses,
-        "Annual Savings": after_tax_annual_salary - (total_expenses * 12)
+        "Annual Savings": after_tax_annual_salary - (total_expenses * 12),
+        "401k Annual Contribution": deferral_amount,
+        "401k Employer Match": employer_match,
+        "Total 401k Deferral": total_annual_deferral,
+        "Current 401k Balance": current_balance,
     }
     
     monthly_impacts = {category: (amount / standard_monthly_income) * 100 for category, amount in expenses.items()}
@@ -63,6 +101,10 @@ def print_report(report, monthly_impacts, yearly_impacts):
     print(f"Monthly Savings (Standard Month): ${report['Monthly Savings (Standard Month)']:.2f}")
     print(f"Monthly Savings (Extra Pay Month): ${report['Monthly Savings (Extra Pay Month)']:.2f}")
     print(f"Annual Savings: ${report['Annual Savings']:.2f}\n")
+    print(f"401k Annual Contribution: ${report['401k Annual Contribution']:.2f}")
+    print(f"401k Employer Match: ${report['401k Employer Match']:.2f}")
+    print(f"Total 401k Annual Deferral: ${report['Total 401k Deferral']:.2f}")
+    print(f"Current 401k Balance: ${report['Current 401k Balance']:.2f}\n")
 
     print("Monthly Impact of each category on Standard Monthly Income:")
     for category, impact in monthly_impacts.items():
@@ -75,7 +117,10 @@ def print_report(report, monthly_impacts, yearly_impacts):
 def main():
     annual_salary = get_annual_salary()
     expenses = get_expenses()
-    report, monthly_impacts, yearly_impacts = calculate_impact(annual_salary, expenses)
+    current_balance, deferral_amount, match_percent = get_401k_details(annual_salary)
+    report, monthly_impacts, yearly_impacts = calculate_impact(
+        annual_salary, expenses, current_balance, deferral_amount, match_percent
+    )
     print_report(report, monthly_impacts, yearly_impacts)
 
 if __name__ == "__main__":
